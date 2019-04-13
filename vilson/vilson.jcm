@@ -1,0 +1,13 @@
+
+mas vilson {
+
+    agent boleto_atrasado:boleto_atrasado.asl{
+    	join:env
+    	focus:env.mesa
+    	instances:2
+    }
+	workspace env{
+		artifact mesa:dominoes.DominoesTable
+	}
+}
+
