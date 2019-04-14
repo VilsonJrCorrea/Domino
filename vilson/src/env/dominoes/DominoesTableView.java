@@ -64,7 +64,7 @@ public class DominoesTableView extends JFrame
 			this.log.setAlignmentY(JLabel.CENTER_ALIGNMENT);
 			
 			setTitle("DOMINOES");
-			setPreferredSize(new Dimension(1200,600));					
+			setPreferredSize(new Dimension(1200,600));	
 			setLayout(new BorderLayout());
 			
 			this.table.setBackground(this.BGTABLECOLOR);
@@ -79,7 +79,7 @@ public class DominoesTableView extends JFrame
 			add(this.status, BorderLayout.SOUTH);			
 			add(this.log, BorderLayout.EAST);
 			
-			build();
+//			build();
 		}
 		
 		public void setNextLeftDomino(int lValue, int rValue) {

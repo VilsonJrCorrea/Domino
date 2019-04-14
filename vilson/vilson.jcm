@@ -1,10 +1,20 @@
 
 mas vilson {
 
-    agent boleto_atrasado:boleto_atrasado.asl{
-    	join:env
-    	focus:env.mesa
-    	instances:2
+//    agent boleto_atrasado1:boleto_atrasado.asl{
+//    	join:env
+//    	focus:env.mesa
+//    	beliefs: name(boleto_atrasado1)
+//    }
+//	 agent boleto_atrasado2:boleto_atrasado.asl{
+//    	join:env
+//    	focus:env.mesa
+//    	beliefs: name(boleto_atrasado2)
+//    }
+     agent test:test.asl{
+    	//join:env
+    	//focus:env.mesa
+    	//beliefs: name(test)
     }
 	workspace env{
 		artifact mesa:dominoes.DominoesTable

@@ -145,7 +145,7 @@ public class DominoesTable extends Artifact {
 	}
 	
 	@OPERATION
-	void getdomino (OpFeedbackParam<Literal> domino) {
+	 void getdomino (OpFeedbackParam<Literal> domino) {
 		await_time(1000);
 		if (this.players[handlerPlayers].equals(getCurrentOpAgentId())) {
 			if (!this.sleepDominos.isEmpty()) {
