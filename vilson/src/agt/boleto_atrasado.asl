@@ -7,7 +7,7 @@
 	
 +hand(DOMINO):true
 	<-
-		+domino(DOMINO);
+		+DOMINO;
 		.print("Recebida ",DOMINO);
 	.
 	
@@ -16,55 +16,45 @@
 		.print("Peças na mesa ",LIST);
 	.
 	
-+playerturn(AGENT_NAME):name(NAME) & AGENT_NAME=NAME & not dominosontable(_) 
++playerturn(AGENT_NAME): name(NAME) & AGENT_NAME=NAME & not dominosontable(_) 
 <-
-	.wait(.count(domino(domino(_,_)),7));
-	?getFirstDomino(DOUBLE);
-	.print("|||||||||||||||Better double ",DOUBLE);
-	put(DOUBLE,l);
-	.print("PEÇA JOGADA ",DOUBLE);
+	.wait(.count((domino(_,_)),7));
+	?getFirstDomino(X,Y);
+	.print("First domino ",X," ",Y);
+	put(domino(X,Y),l);
+//	.print("PEÇA JOGADA ",DOUBLE);
 .
 
-+playerturn(AGENT_NAME):name(NAME) & AGENT_NAME=NAME
-<-
-	.print("My turn ",AGENT_NAME);
-	!chooseAndPut;
++playerturn(AGENT_NAME): .my_name(NAME) & AGENT_NAME=NAME
+	<-
+		.print("My turn ",AGENT_NAME);
+//		!chooseAndPut;
 .
 
 
 +!chooseAndPut:true
 	<-
-		?getBetterDouble(R);
+	true
+//		?getBetterDouble(R);
 .
 
-//REGRAS--------------------------------------------------------------------------gx ----------------
-getFirstDomino(DOMINO1):-
-	 domino(DOMINO1)
-	& getSides(DOMINO1,X1,Y1)
-	& not(domino(DOMINO2) 
-		& .print("Domino 1 ",DOMINO1," Domino 2 ",DOMINO2 )
-		& getSides(DOMINO2,X2,Y2) 
-		& X2==Y2 
-		& X1\==Y1
-//		& X1 < X2
-//		& X1 < Y2
-//		& Y1 < X2
-//		& Y1 < Y2
-	)
+//REGRAS-------------------------------------------------------------------------- ----------------
+getFirstDomino(X1,Y1):-
+	 domino(X1,Y1)
+	& X1==Y1
+	& not(domino(X2,Y2)
+			& X2==Y2	
+			& X2 > X1)
 .
-
-
-//getBetterDouble(DOMINO1):-
-//	 domino(DOMINO1)
-//	& getSides(DOMINO1,X1,Y1)
-//	& not(domino(DOMINO2) 
-//		& .print("Domino 1 ",DOMINO1," Domino 2",DOMINO2 )
-//		& getSides(DOMINO2,X2,Y2) 
-//		& X2==Y2 & X1\==Y1
-//	)
-//.
-
-getSides(domino(X,Y),X,Y):-true.
+getFirstDomino(X1,Y1):-
+	 domino(X1,Y1)
+	& X1\==Y1
+	& S1 = X1+Y1
+	& not(domino(X2,Y2)
+			& X2\==Y2
+			& S2 = X2+Y2	
+			& S2 > S1)
+.
 
 
 

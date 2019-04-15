@@ -79,7 +79,7 @@ public class DominoesTableView extends JFrame
 			add(this.status, BorderLayout.SOUTH);			
 			add(this.log, BorderLayout.EAST);
 			
-//			build();
+			build();
 		}
 		
 		public void setNextLeftDomino(int lValue, int rValue) {
