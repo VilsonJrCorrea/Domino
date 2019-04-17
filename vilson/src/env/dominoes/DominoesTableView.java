@@ -65,6 +65,7 @@ public class DominoesTableView extends JFrame
 			
 			setTitle("DOMINOES");
 			setPreferredSize(new Dimension(1200,600));	
+//			setPreferredSize(new Dimension(0,0));	
 			setLayout(new BorderLayout());
 			
 			this.table.setBackground(this.BGTABLECOLOR);

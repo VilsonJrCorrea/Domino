@@ -19,7 +19,7 @@
 		.print("Peças na mesa ",LIST);
 	.
 	
-+playerturn(AGENT_NAME): .my_name(NAME) & AGENT_NAME==NAME & not dominosontable(_) 
++playerturn(AGENT_NAME): .my_name(NAME) & AGENT_NAME==NAME & not dominosontable(_) & not win(_)
 <-
 	.wait(.count((domino(_,_)),7));
 	?getFirstDomino(X,Y);
@@ -27,42 +27,164 @@
 	-domino(X,Y);
 .
 
-+playerturn(AGENT_NAME): .my_name(NAME) & AGENT_NAME\==NAME & not dominosontable(_) 
++playerturn(AGENT_NAME): .my_name(NAME) & AGENT_NAME\==NAME & not dominosontable(_)  & not win(_)
 <-
 	-+otherPlayerName(AGENT_NAME);
 .
 
 +playerturn(AGENT_NAME): .my_name(NAME) 
 						& AGENT_NAME==NAME
-//						& GOAL==play 
-//						& haveDominoToPlay(DOM)
+						& not planning
+						& not win(_)
+						<-
+							+planning
+							!updateGoal;
+							!play
+						.
++sucessfullput(DOMINO):true
 	<-
-		.print("Entre aqui")
-		?refreshGoal(GOAL) 
-		.print("My turn ",AGENT_NAME);
+		.print("Domino full put with sucess ",DOMINO)
+	.
+	
++draw:true
+	<-
+		.print("Draw match")
+	.
++!updateGoal: true
+	<-
+		?refreshGoal(GOAL);
+		-goal(_);
+		+goal(GOAL);
+.
++!dropDominoOfBelief(DOMINO):true
+	<-
+		-DOMINO;
+		?getReverse(DOMINO,RDOMINO);
+		-RDOMINO;
+	.
+	
++!play: goal(win) & haveDominoToPlay(DOMINO,SIDE)
+	<-
+		put(DOMINO,SIDE);
+		!dropDominoOfBelief(DOMINO);
+		-planning;
+	.
+	
++!play: goal(draw) 
+	<-
+		.print("Goal draw ")
+	.
+	
++!play:  goal(lose) 
+	<-
+		.print("Goal lose")
 	.
 
-
+-!play: true
+	<-
+		!buy;
+		!updateGoal;
+		?goal(GOAL);
+		.print("Goal updated ",GOAL);
+		!play;
+	.
++!buy:true
+	<-
+	getdomino(NEWDOMINO);
+	+NEWDOMINO;
+	.print("New domino buyed ",NEWDOMINO);
+.
+-!buy:true
+	<-
+		.print("Passing the turn");
+		passturn;
+	.
 //==================================================rules what play
-refreshGoal(GOAL):-
-	getExtremeties(X,Y) & refreshEnemyDominoes(LISTDONTHAVE) & calculateProbabilityWin(X,Y,LISTDONTHAVE,P) & .print(P)
+getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) 
+							& CONT>0 
+							& DOM = domino(X,I).
+
+getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) 
+							& CONT==0 
+							& getBiggerInLeft(X,I-1,DOM).
+
+getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT) 
+							& CONT>0 
+							& DOM=domino(I,X).
+							
+getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT) 
+							& CONT==0 
+							& getBiggerInRight(X,I-1,DOM).
+							
+getReverse(A,B):- getSides(A,P,Q) & B=domino(Q,P).
+
+haveDominoToPlay(DOM,l):-
+	goal(win)
+	& getExtremeties(X,Y) 
+	& .count(domino(X,_),CONT)
+	& CONT > 0
+	& getBiggerInLeft(X,6,AUX)
+	& getReverse(AUX,DOM)
+.
+haveDominoToPlay(DOM,l):-
+	goal(win)
+	& getExtremeties(X,Y) 
+	& .count(domino(_,X),CONT)
+	& CONT > 0
+	& getBiggerInRight(X,6,DOM)
 .
 
-calculateProbabilityWin(X,Y,LISTDONTHAVE,P):-
+haveDominoToPlay(DOM,r):-
+	goal(win)
+	& getExtremeties(X,Y) 
+	& .count(domino(Y,_),CONT)
+	& CONT > 0
+	& getBiggerInLeft(Y,6,DOM)
+.
+
+haveDominoToPlay(DOM,r):-
+	goal(win)
+	& getExtremeties(X,Y) 
+	& .count(domino(_,Y),CONT)
+	& CONT > 0
+	& getBiggerInRight(Y,6,AUX)
+	& getReverse(AUX,DOM)
+.
+
+
+
+
+refreshGoal(GOAL):-
+	getExtremeties(X,Y) 
+	& refreshEnemyDominoes(LISTDONTHAVE) 
+	& calculateProbabilityWin(X,Y,LISTDONTHAVE,PROBABILITY)
+	& chooseGoal(PROBABILITY,GOAL)
+	& .print(GOAL," - probability of lose ",PROBABILITY)
+.
+
+chooseGoal(PROBABILITY,GOAL):- PROBABILITY<0.5 & GOAL=win.
+chooseGoal(PROBABILITY,GOAL):- PROBABILITY>=0.5 & PROBABILITY<=0.95 & GOAL=draw.
+chooseGoal(PROBABILITY,GOAL):- PROBABILITY>0.95 & GOAL=lose.
+
+calculateProbabilityWin(X,Y,LISTDONTHAVE,R):-
 	 allDominoes(LISTALL)
 	& .length(LISTALL,TAM)
-	& .print(X,Y)
+	& .length(LISTDONTHAVE,TAMDONT)
+	& .count(domino(_,_),TAMHAND)
 	& ((X\==Y 
 		& .count(domino(_,X),X2) 
 		& .count(domino(Y,_),X3)
 		& .count(domino(X,_),X1) 
 		& .count(domino(_,Y),X4)
-		& P=(X1+X2+X3+X4)/TAM ) 	 
+		& P=(X1+X2+X3+X4)) 	 
 	|(X==Y 
 		& .count(domino(X,_),X1) 
 		& .count(domino(_,Y),X2)
-		& P=(X1+X2)/TAM))
-	
+		& P=(X1+X2)))
+	& P1 = P/TAM
+	& NAMAO=TAMHAND-P
+	& P2 = NAMAO/TAMDONT
+	& R = P2-P1
 .
 
 getExtremeties(X,Y):-
