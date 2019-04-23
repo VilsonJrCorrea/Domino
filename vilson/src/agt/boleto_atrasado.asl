@@ -1,11 +1,9 @@
 !start.
-
 +!start : true 
 	<- 
 		?allDominoes(RESPOSTA);
 		+allDominoes(RESPOSTA);
 		join;
-		
 	.
 	
 +hand(DOMINO):true
@@ -50,7 +48,7 @@
 	<-
 		.print("Draw match")
 	.
-+!updateGoal: true
++!updateGoal: not win(_)
 	<-
 		?refreshGoal(GOAL);
 		-goal(_);
@@ -63,29 +61,52 @@
 		-RDOMINO;
 	.
 	
-+!play: goal(win) & haveDominoToPlay(DOMINO,SIDE)
++!play: goal(win) & haveExtremeties & getDominoToWin(DOMINO,SIDE)
 	<-
 		put(DOMINO,SIDE);
 		!dropDominoOfBelief(DOMINO);
 		-planning;
 	.
 	
-+!play: goal(draw) 
++!play: goal(win) & not haveExtremeties 
+<-
+	.print("Goal is WIN, but i don't have the extremeties!'");
+	!buy;
+	!updateGoal;
+	?goal(GOAL);
+	.print("Goal updated ",GOAL);
+	!play;
+.	
+	
++!play: goal(draw) & haveExtremeties & getDominoToDraw(DOMINO,SIDE)
 	<-
-		.print("Goal draw ")
+		put(DOMINO,SIDE);
+		!dropDominoOfBelief(DOMINO);
+		-planning;
 	.
+
++!play: goal(draw) & not haveExtremeties 
+	<-
+		.print("Goal is DRAW, but i don't have the extremeties!");
+		!buy;
+		!updateGoal;
+		?goal(GOAL);
+		.print("Goal updated ",GOAL);
+		!play;
+	.
+	
 	
 +!play:  goal(lose) 
 	<-
 		.print("Goal lose")
 	.
 
--!play: true
+-!play: not win(_)
 	<-
 		!buy;
 		!updateGoal;
 		?goal(GOAL);
-		.print("Goal updated ",GOAL);
+		.print("##############>Goal updated ",GOAL);
 		!play;
 	.
 +!buy:true
@@ -99,61 +120,40 @@
 		.print("Passing the turn");
 		passturn;
 	.
-//==================================================rules what play
-getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) 
-							& CONT>0 
-							& DOM = domino(X,I).
-
-getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) 
-							& CONT==0 
-							& getBiggerInLeft(X,I-1,DOM).
-
-getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT) 
-							& CONT>0 
-							& DOM=domino(I,X).
-							
-getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT) 
-							& CONT==0 
-							& getBiggerInRight(X,I-1,DOM).
-							
-getReverse(A,B):- getSides(A,P,Q) & B=domino(Q,P).
-
-haveDominoToPlay(DOM,l):-
-	goal(win)
-	& getExtremeties(X,Y) 
-	& .count(domino(X,_),CONT)
-	& CONT > 0
-	& getBiggerInLeft(X,6,AUX)
-	& getReverse(AUX,DOM)
-.
-haveDominoToPlay(DOM,l):-
-	goal(win)
-	& getExtremeties(X,Y) 
-	& .count(domino(_,X),CONT)
-	& CONT > 0
-	& getBiggerInRight(X,6,DOM)
-.
-
-haveDominoToPlay(DOM,r):-
-	goal(win)
-	& getExtremeties(X,Y) 
-	& .count(domino(Y,_),CONT)
-	& CONT > 0
-	& getBiggerInLeft(Y,6,DOM)
-.
-
-haveDominoToPlay(DOM,r):-
-	goal(win)
-	& getExtremeties(X,Y) 
-	& .count(domino(_,Y),CONT)
-	& CONT > 0
-	& getBiggerInRight(Y,6,AUX)
-	& getReverse(AUX,DOM)
-.
 
 
+//DRAW--------------------------------------------------------------------------------------------------
+getDominoToDraw(DOMINO,SIDE):- whatThatMostAppearThatIHave(QTD,P) &chooseDominoToDraw(P,DOM) & whatSidePlay(DOM,SIDE,DOMINO).
+whatThatMostAppearThatIHave(QTD,P):- dominosontable(TABLE) & verifyDominonsOnTable(TABLE,0,0,QTD,VALAUX,P) .
+verifyDominonsOnTable(TABLE,I,MAIOR,CONT,VALAUX,P):- 
+					(I<7 & getExtremeties(XE,YE)
+						 & (XE==I | YE==I)
+						 & verifyHowManyHaveOnTheRest(TABLE,I,0,SUM,X) 
+						 & (SUM>=MAIOR & SUM<7 &  verifyDominonsOnTable(TABLE,I+1,SUM,CONT,X,P) 
+					          | (SUM<MAIOR | SUM==7) & verifyDominonsOnTable(TABLE,I+1,MAIOR,CONT,VALAUX,P)))
+					| (I<7 &verifyDominonsOnTable(TABLE,I+1,MAIOR,CONT,VALAUX,P)).
+verifyDominonsOnTable(TABLE,I,MAIOR,CONT,VALAUX,P):-CONT=MAIOR & P=VALAUX.
+verifyHowManyHaveOnTheRest([H|T],I,N,SUM,VAL):-	getSides(H,X,Y) & (X==I | Y==I) & verifyHowManyHaveOnTheRest(T,I,N+1,SUM,VAL).
+verifyHowManyHaveOnTheRest([H|T],I,N,SUM,VAL):- getSides(H,X,Y) & (X\==I | Y\==I) & verifyHowManyHaveOnTheRest(T,I,N,SUM,VAL).
+verifyHowManyHaveOnTheRest([],I,N,SUM,VAL):-SUM=N & VAL=I.
+haveExtremeties:- getExtremeties(XE,YE) & (domino(XE,_)| domino(YE,_)| domino(_,XE)| domino(_,YE)).
+chooseDominoToDraw(P,DOMINO):-	.count(domino(P,_),COUNT)& COUNT > 0 & biggerInRigth(DOMINO,P,6).
+chooseDominoToDraw(P,DOMINO):-	.count(domino(_,P),COUNT)& COUNT>0   & biggerInLeft(DOMINO,P,6).
+biggerInRigth(DOMINO,N,M):-	.count(domino(N,M),COUNT)&((COUNT>0 & DOMINO = domino(N,M))|(COUNT==0&biggerInRigth(DOMINO,N,M-1))).
+biggerInLeft(DOMINO,N,M):- .count(domino(M,N),COUNT) &((COUNT>0	& DOMINO=domino(M,N))|COUNT==0 & biggerInLeft(DOMINO,N,M-1)).
+
+//getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) & CONT>0 & DOM = domino(X,I).
+//getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) & CONT==0 & getBiggerInLeft(X,I-1,DOM).
+//getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT)& CONT>0 & DOM=domino(I,X).
+//getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT) & CONT==0 & getBiggerInRight(X,I-1,DOM).
+
+whatSidePlay(DOMINO,SIDE,R):- getExtremeties(XE,YE)	& getSides(DOMINO,X,Y) & XE == X & getReverse(DOMINO,NDOMINO) & R = NDOMINO	& SIDE = l.
+whatSidePlay(DOMINO,SIDE,R):- getExtremeties(XE,YE) & getSides(DOMINO,X,Y) & X == YE & R = DOMINO & SIDE = r.
+whatSidePlay(DOMINO,SIDE,R):- getExtremeties(XE,YE)	& getSides(DOMINO,X,Y) & Y == YE & getReverse(DOMINO,NDOMINO) & R = NDOMINO	& SIDE = r.
+whatSidePlay(DOMINO,SIDE,R):-getExtremeties(XE,YE) & getSides(DOMINO,X,Y) & Y == XE & R = DOMINO & SIDE = l.
 
 
+//RULES
 refreshGoal(GOAL):-
 	getExtremeties(X,Y) 
 	& refreshEnemyDominoes(LISTDONTHAVE) 
@@ -162,10 +162,11 @@ refreshGoal(GOAL):-
 	& .print(GOAL," - probability of lose ",PROBABILITY)
 .
 
-chooseGoal(PROBABILITY,GOAL):- PROBABILITY<0.5 & GOAL=win.
-chooseGoal(PROBABILITY,GOAL):- PROBABILITY>=0.5 & PROBABILITY<=0.95 & GOAL=draw.
-chooseGoal(PROBABILITY,GOAL):- PROBABILITY>0.95 & GOAL=lose.
-
+//WIN-------------------------------------------------------------------
+getDominoToWin(DOM,l):- getExtremeties(X,Y) & .count(domino(X,_),CONT) & CONT > 0	& getBiggerInLeft(X,6,AUX) & getReverse(AUX,DOM).
+getDominoToWin(DOM,l):- getExtremeties(X,Y) & .count(domino(_,X),CONT) & CONT > 0	& getBiggerInRight(X,6,DOM).
+getDominoToWin(DOM,r):- getExtremeties(X,Y) & .count(domino(Y,_),CONT) & CONT > 0	& getBiggerInLeft(Y,6,DOM).
+getDominoToWin(DOM,r):- getExtremeties(X,Y) & .count(domino(_,Y),CONT) & CONT > 0	& getBiggerInRight(Y,6,AUX)	& getReverse(AUX,DOM).
 calculateProbabilityWin(X,Y,LISTDONTHAVE,R):-
 	 allDominoes(LISTALL)
 	& .length(LISTALL,TAM)
@@ -187,89 +188,31 @@ calculateProbabilityWin(X,Y,LISTDONTHAVE,R):-
 	& R = P2-P1
 .
 
-getExtremeties(X,Y):-
-	dominosontable(LIST) & getHead(LIST,X) & getLastElement(LIST,Y)
-.
+getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) & CONT>0 & DOM = domino(X,I).
+getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) & CONT==0 & getBiggerInLeft(X,I-1,DOM).
+getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT)& CONT>0 & DOM=domino(I,X).
+getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT) & CONT==0 & getBiggerInRight(X,I-1,DOM).
+getReverse(A,B):- getSides(A,P,Q) & B=domino(Q,P).
+chooseGoal(PROBABILITY,GOAL):- PROBABILITY<0.2 & GOAL=win.
+chooseGoal(PROBABILITY,GOAL):- PROBABILITY>=0.2 & PROBABILITY<=0.95 & GOAL=draw.
+chooseGoal(PROBABILITY,GOAL):- PROBABILITY>0.95 & GOAL=lose.
 getHead([H|T],R):-getSides(H,X,Y) & R=X.
 getLastElement([H|T],R):-getLastElement(T,R).
-getLastElement([H|[]],R):-getSides(H,X,Y) & R=X.
+getLastElement([H|[]],R):-getSides(H,X,Y) & R=Y.
 getSides(domino(X,Y),X,Y):-true.
-
-refreshEnemyDominoes(RESPOSTA):-
-	allDominoes(LIST) & verifyWhatIDontHave(LIST,[],RESPOSTA)
-.
-
-verifyWhatIDontHave([H|T],AUXLIST,LISTDONTHAVE):-
-	getSides(H,X,Y) & domino(X,Y) & verifyWhatIDontHave(T,AUXLIST,LISTDONTHAVE)
-.
-verifyWhatIDontHave([H|T],AUXLIST,LISTDONTHAVE):-
-	getSides(H,X,Y) & not domino(X,Y) & .concat([H],AUXLIST,NLIST) & verifyWhatIDontHave(T,NLIST,LISTDONTHAVE)
-.
-verifyWhatIDontHave([],AUXLIST,LISTDONTHAVE):-
-	LISTDONTHAVE=AUXLIST
-.
-
-
-
-//=====================================================Rules start
-getFirstDomino(X1,Y1):-
-	 domino(X1,Y1)
-	& X1==Y1
-	& not(domino(X2,Y2)
-			& X2==Y2	
-			& X2 > X1)
-.
-getFirstDomino(X1,Y1):-
-	 domino(X1,Y1)
-	& X1\==Y1
-	& S1 = X1+Y1
-	& not(domino(X2,Y2)
-			& X2\==Y2
-			& S2 = X2+Y2	
-			& S2 > S1)
-.
-
-allDominoes(RESPOSTA):-
-	getAllDominoes(0,6,[],RESPOSTA)
-.
-getAllDominoes(X,MAX,L,RESPOSTA):-
-	X<=MAX 
-	& getFamily(X,0,MAX,L,L2)
-	& getAllDominoes(X+1,MAX,L2,RESPOSTA)
-.
-
-getAllDominoes(X,MAX,L,RESPOSTA):-
-	RESPOSTA=L
-.
-
-getFamily(X,I,MAX,L,RESPOSTA):-
-	I<=MAX 
-	& not .member(domino(X,I),L) 
-	& not .member(domino(I,X),L) 
-	& .concat([domino(X,I)],L,N) 
-	& getFamily(X,I+1,MAX,N,RESPOSTA)
-.
-getFamily(X,I,MAX,L,RESPOSTA):-
-	I<=MAX 
-	& (.member(domino(X,I),L) | .member(domino(I,X),L))
-	& getFamily(X,I+1,MAX,L,RESPOSTA)
-.
-
-getFamily(X,Y,MAX,L,RESPOSTA):-
-	L=RESPOSTA
-.
-
-
-
-
-
-
-
-
-
-
-
-
+getExtremeties(X,Y):- dominosontable(LIST) & getHead(LIST,X) & getLastElement(LIST,Y).
+refreshEnemyDominoes(RESPOSTA):-allDominoes(LIST) & verifyWhatIDontHave(LIST,[],RESPOSTA).
+verifyWhatIDontHave([H|T],AUXLIST,LISTDONTHAVE):-getSides(H,X,Y) & domino(X,Y) & verifyWhatIDontHave(T,AUXLIST,LISTDONTHAVE).
+verifyWhatIDontHave([H|T],AUXLIST,LISTDONTHAVE):-getSides(H,X,Y) & not domino(X,Y) & .concat([H],AUXLIST,NLIST) & verifyWhatIDontHave(T,NLIST,LISTDONTHAVE).
+verifyWhatIDontHave([],AUXLIST,LISTDONTHAVE):-LISTDONTHAVE=AUXLIST.
+getFirstDomino(X1,Y1):- domino(X1,Y1)& X1==Y1& not(domino(X2,Y2)& X2==Y2& X2 > X1).
+getFirstDomino(X1,Y1):- domino(X1,Y1)& X1 \== Y1 & S1=X1+Y1 & not(domino(X2,Y2) & X2\==Y2 & S2=X2+Y2 & S2>S1).
+allDominoes(RESPOSTA):-	getAllDominoes(0,6,[],RESPOSTA).
+getAllDominoes(X,MAX,L,RESPOSTA):-	X<=MAX	& getFamily(X,0,MAX,L,L2)& getAllDominoes(X+1,MAX,L2,RESPOSTA).
+getAllDominoes(X,MAX,L,RESPOSTA):-RESPOSTA=L.
+getFamily(X,I,MAX,L,RESPOSTA):-	I<=MAX & not .member(domino(X,I),L)	& not .member(domino(I,X),L) & .concat([domino(X,I)],L,N) & getFamily(X,I+1,MAX,N,RESPOSTA).
+getFamily(X,I,MAX,L,RESPOSTA):-	I<=MAX & (.member(domino(X,I),L) | .member(domino(I,X),L))	& getFamily(X,I+1,MAX,L,RESPOSTA).
+getFamily(X,Y,MAX,L,RESPOSTA):-L=RESPOSTA.
 
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }
