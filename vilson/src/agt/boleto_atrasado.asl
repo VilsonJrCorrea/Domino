@@ -1,3 +1,4 @@
+sleeping(14).
 !start.
 +!start : true 
 	<- 
@@ -6,6 +7,14 @@
 		join;
 	.
 	
++peeked:true
+	<-
+		?sleeping(S);
+		NS=S-1;
+		-sleeping(_);
+		+sleeping(NS);		
+	.
+
 +hand(DOMINO):true
 	<-
 		+DOMINO;
@@ -68,15 +77,6 @@
 		-planning;
 	.
 	
-+!play: goal(win) & not haveExtremeties 
-<-
-	.print("Goal is WIN, but i don't have the extremeties!'");
-	!buy;
-	!updateGoal;
-	?goal(GOAL);
-	.print("Goal updated ",GOAL);
-	!play;
-.	
 	
 +!play: goal(draw) & haveExtremeties & getDominoToDraw(DOMINO,SIDE)
 	<-
@@ -85,9 +85,35 @@
 		-planning;
 	.
 
-+!play: goal(draw) & not haveExtremeties 
+
++!play: goal(crazy) & haveExtremeties// & getDominoToDraw(DOMINO,SIDE)
 	<-
-		.print("Goal is DRAW, but i don't have the extremeties!");
+		!buyLikeCrazy;
+	.
+
++!buyLikeCrazy:sleeping(S) & S>0
+	 <-
+		.print("Buying like crazy ");
+ 		!buy;
+ 		!buyLikeCrazy;
+	.
+
++!buyLikeCrazy:sleeping(S) & S==0
+	 <- 
+	 	.print("Finhised buying like crazy");
+		?getDominoToPlayCrazyMode(DOMINO,SIDE);
+		.print("I will play DOMINO ",DOMINO,"SIDE ",SIDE)
+		put(DOMINO,SIDE);
+		!dropDominoOfBelief(DOMINO);
+		-planning;
+	.	
+
+
+
++!play: goal(_) & not haveExtremeties 
+	<-
+		?goal(GOALI);
+		.print("Goal is ", GOALI, " but i don't have the extremeties!");
 		!buy;
 		!updateGoal;
 		?goal(GOAL);
@@ -95,10 +121,12 @@
 		!play;
 	.
 	
-	
-+!play:  goal(lose) 
++!play:  goal(lose) & haveExtremeties & getDominoToLose(DOMINO,SIDE)
 	<-
-		.print("Goal lose")
+		.print("Goal lose");
+		 put(DOMINO,SIDE);
+		!dropDominoOfBelief(DOMINO);
+		-planning;
 	.
 
 -!play: not win(_)
@@ -120,7 +148,44 @@
 		.print("Passing the turn");
 		passturn;
 	.
-
+	
+//LOSE-------------------------------------------------------------------------------------------------
+getDominoToLose(DOM,l):- getExtremeties(X,Y) & .count(domino(X,_),CONT) & CONT > 0	& getBiggerInLeft(X,6,AUX) & getReverse(AUX,DOM).
+getDominoToLose(DOM,l):- getExtremeties(X,Y) & .count(domino(_,X),CONT) & CONT > 0	& getBiggerInRight(X,6,DOM).
+getDominoToLose(DOM,r):- getExtremeties(X,Y) & .count(domino(Y,_),CONT) & CONT > 0	& getBiggerInLeft(Y,6,DOM).
+getDominoToLose(DOM,r):- getExtremeties(X,Y) & .count(domino(_,Y),CONT) & CONT > 0	& getBiggerInRight(Y,6,AUX)	& getReverse(AUX,DOM).
+//CRAZY-------------------------------------------------------------------------------------------------
+getDominoToPlayCrazyMode(DOMINO,SIDE):-verifyWhatThatIHaveToCrazyMode(DOMINO,SIDE) & .print("oi").
+verifyWhatThatIHaveToCrazyMode(DOMINO,SIDE):- getExtremeties(XE,YE) 
+											& countInX(XE,N1) 
+											& countInY(YE,N2)
+											& ((N1>=N2 & SIDE=l & chooseDominoToCrazy(XE,DOM))| 
+												(N1<N2 & SIDE=r & chooseDominoToCrazy(YE,DOM)))
+											& needReverse(DOMINO,DOM,SIDE).
+											
+needReverse(R,DOMINO,SIDE):-getSides(DOMINO,X,Y) & getExtremeties(XE,YE) & X==XE & SIDE = l	& getReverse(DOMINO,NDOMINO) & R=NDOMINO.
+needReverse(R,DOMINO,SIDE):-getSides(DOMINO,X,Y) & getExtremeties(XE,YE) & YE==Y & SIDE = r	& getReverse(DOMINO,NDOMINO)& R=NDOMINO.
+needReverse(R,DOMINO,SIDE):-getSides(DOMINO,X,Y) & getExtremeties(XE,YE) & XE==Y & SIDE = l	& R=DOMINO.
+needReverse(R,DOMINO,SIDE):-getSides(DOMINO,X,Y) & getExtremeties(XE,YE) & YE==X & SIDE = r	& R=DOMINO.
+chooseDominoToCrazy(E,DOMINO):-getDominoThatIWillHaveForCrazyMode(DOMINO,E,6).
+getDominoThatIWillHaveForCrazyMode(DOMINO,E,I):-haveDomino(E,I,DOMINO)| (not haveDomino(E,I) & getDominoThatIWillHaveForCrazyMode(DOMINO,E,I-1)).
+haveDomino(E,I,DOMINO):-.count(domino(E,I),C1) & C1>0 & DOMINO=domino(E,I).
+haveDomino(E,I,DOMINO):-.count(domino(I,E),C1) & C1>0 & DOMINO=domino(I,E).
+countInX(XE,N):- refreshEnemyDominoes(LISTDONTHAVE)	
+			   & enemyHaveExtremetie(LISTDONTHAVE,XE)
+			   & .count(domino(XE,_),COUNT1)
+			   & .count(domino(_,XE),COUNT2)
+			   & N=COUNT1+COUNT2
+.
+countInY(YE,N):-refreshEnemyDominoes(LISTDONTHAVE) 
+			  & enemyHaveExtremetie(LISTDONTHAVE,YE) 
+			  & .count(domino(YE,_),COUNT1)
+			  & .count(domino(_,YE),COUNT2) & N=COUNT1+COUNT2
+.
+countInX(XE,N):-refreshEnemyDominoes(LISTDONTHAVE) & not enemyHaveExtremetie(LISTDONTHAVE,XE) & N = 0.
+countInY(YE,N):-refreshEnemyDominoes(LISTDONTHAVE)& not enemyHaveExtremetie(LISTDONTHAVE,YE)& N=0.
+enemyHaveExtremetie([H|T],E):- (getSides(H,X,Y) & E==X | E==Y)|(enemyHaveExtremetie(T,E)).
+enemyHaveExtremetie([],E):-false.
 
 //DRAW--------------------------------------------------------------------------------------------------
 getDominoToDraw(DOMINO,SIDE):- whatThatMostAppearThatIHave(QTD,P) &chooseDominoToDraw(P,DOM) & whatSidePlay(DOM,SIDE,DOMINO).
@@ -193,9 +258,12 @@ getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) & CONT==0 & getBiggerInLeft(
 getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT)& CONT>0 & DOM=domino(I,X).
 getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT) & CONT==0 & getBiggerInRight(X,I-1,DOM).
 getReverse(A,B):- getSides(A,P,Q) & B=domino(Q,P).
+
 chooseGoal(PROBABILITY,GOAL):- PROBABILITY<0.2 & GOAL=win.
-chooseGoal(PROBABILITY,GOAL):- PROBABILITY>=0.2 & PROBABILITY<=0.95 & GOAL=draw.
-chooseGoal(PROBABILITY,GOAL):- PROBABILITY>0.95 & GOAL=lose.
+chooseGoal(PROBABILITY,GOAL):- PROBABILITY>=0.2 & PROBABILITY<=0.30 & GOAL=draw.
+chooseGoal(PROBABILITY,GOAL):- PROBABILITY>0.30 & PROBABILITY<=1 & GOAL=crazy.
+chooseGoal(PROBABILITY,GOAL):- PROBABILITY>1 & GOAL=lose.
+
 getHead([H|T],R):-getSides(H,X,Y) & R=X.
 getLastElement([H|T],R):-getLastElement(T,R).
 getLastElement([H|[]],R):-getSides(H,X,Y) & R=Y.
