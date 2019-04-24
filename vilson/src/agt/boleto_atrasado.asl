@@ -163,7 +163,6 @@ verifyWhatThatIHaveToCrazyMode(DOMINO,SIDE):- getExtremeties(XE,YE)
 											& ((N1>=N2 & SIDE=l & chooseDominoToCrazy(XE,DOM))| 
 												(N1<N2 & SIDE=r & chooseDominoToCrazy(YE,DOM)))
 											& needReverse(DOMINO,DOM,SIDE).
-											
 needReverse(R,DOMINO,SIDE):-getSides(DOMINO,X,Y) & getExtremeties(XE,YE) & X==XE & SIDE = l	& getReverse(DOMINO,NDOMINO) & R=NDOMINO.
 needReverse(R,DOMINO,SIDE):-getSides(DOMINO,X,Y) & getExtremeties(XE,YE) & YE==Y & SIDE = r	& getReverse(DOMINO,NDOMINO)& R=NDOMINO.
 needReverse(R,DOMINO,SIDE):-getSides(DOMINO,X,Y) & getExtremeties(XE,YE) & XE==Y & SIDE = l	& R=DOMINO.
@@ -187,7 +186,6 @@ countInX(XE,N):-refreshEnemyDominoes(LISTDONTHAVE) & not enemyHaveExtremetie(LIS
 countInY(YE,N):-refreshEnemyDominoes(LISTDONTHAVE)& not enemyHaveExtremetie(LISTDONTHAVE,YE)& N=0.
 enemyHaveExtremetie([H|T],E):- (getSides(H,X,Y) & E==X | E==Y)|(enemyHaveExtremetie(T,E)).
 enemyHaveExtremetie([],E):-false.
-
 //DRAW--------------------------------------------------------------------------------------------------
 getDominoToDraw(DOMINO,SIDE):- whatThatMostAppearThatIHave(QTD,P) &chooseDominoToDraw(P,DOM) & whatSidePlay(DOM,SIDE,DOMINO).
 whatThatMostAppearThatIHave(QTD,P):- dominosontable(TABLE) & verifyDominonsOnTable(TABLE,0,0,QTD,VALAUX,P) .
@@ -207,27 +205,10 @@ chooseDominoToDraw(P,DOMINO):-	.count(domino(P,_),COUNT)& COUNT > 0 & biggerInRi
 chooseDominoToDraw(P,DOMINO):-	.count(domino(_,P),COUNT)& COUNT>0   & biggerInLeft(DOMINO,P,6).
 biggerInRigth(DOMINO,N,M):-	.count(domino(N,M),COUNT)&((COUNT>0 & DOMINO = domino(N,M))|(COUNT==0&biggerInRigth(DOMINO,N,M-1))).
 biggerInLeft(DOMINO,N,M):- .count(domino(M,N),COUNT) &((COUNT>0	& DOMINO=domino(M,N))|COUNT==0 & biggerInLeft(DOMINO,N,M-1)).
-
-//getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) & CONT>0 & DOM = domino(X,I).
-//getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) & CONT==0 & getBiggerInLeft(X,I-1,DOM).
-//getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT)& CONT>0 & DOM=domino(I,X).
-//getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT) & CONT==0 & getBiggerInRight(X,I-1,DOM).
-
 whatSidePlay(DOMINO,SIDE,R):- getExtremeties(XE,YE)	& getSides(DOMINO,X,Y) & XE == X & getReverse(DOMINO,NDOMINO) & R = NDOMINO	& SIDE = l.
 whatSidePlay(DOMINO,SIDE,R):- getExtremeties(XE,YE) & getSides(DOMINO,X,Y) & X == YE & R = DOMINO & SIDE = r.
 whatSidePlay(DOMINO,SIDE,R):- getExtremeties(XE,YE)	& getSides(DOMINO,X,Y) & Y == YE & getReverse(DOMINO,NDOMINO) & R = NDOMINO	& SIDE = r.
 whatSidePlay(DOMINO,SIDE,R):-getExtremeties(XE,YE) & getSides(DOMINO,X,Y) & Y == XE & R = DOMINO & SIDE = l.
-
-
-//RULES
-refreshGoal(GOAL):-
-	getExtremeties(X,Y) 
-	& refreshEnemyDominoes(LISTDONTHAVE) 
-	& calculateProbabilityWin(X,Y,LISTDONTHAVE,PROBABILITY)
-	& chooseGoal(PROBABILITY,GOAL)
-	& .print(GOAL," - probability of lose ",PROBABILITY)
-.
-
 //WIN-------------------------------------------------------------------
 getDominoToWin(DOM,l):- getExtremeties(X,Y) & .count(domino(X,_),CONT) & CONT > 0	& getBiggerInLeft(X,6,AUX) & getReverse(AUX,DOM).
 getDominoToWin(DOM,l):- getExtremeties(X,Y) & .count(domino(_,X),CONT) & CONT > 0	& getBiggerInRight(X,6,DOM).
@@ -252,6 +233,14 @@ calculateProbabilityWin(X,Y,LISTDONTHAVE,R):-
 	& NAMAO=TAMHAND-P
 	& P2 = NAMAO/TAMDONT
 	& R = P2-P1
+.
+//COMMON-------------------------------------------------------------------
+refreshGoal(GOAL):-
+	getExtremeties(X,Y) 
+	& refreshEnemyDominoes(LISTDONTHAVE) 
+	& calculateProbabilityWin(X,Y,LISTDONTHAVE,PROBABILITY)
+	& chooseGoal(PROBABILITY,GOAL)
+	& .print(GOAL," - probability of lose ",PROBABILITY)
 .
 
 getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) & CONT>0 & DOM = domino(X,I).
