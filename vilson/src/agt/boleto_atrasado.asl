@@ -26,7 +26,7 @@ sleeping(14).
 		.print("Peças na mesa ",LIST);
 	.
 	
-+playerturn(AGENT_NAME): .my_name(NAME) & AGENT_NAME==NAME & not dominosontable(_) & not win(_)
++playerturn(AGENT_NAME): .my_name(NAME) & AGENT_NAME==NAME & not dominosontable(_) & not win(_) & not draw
 <-
 	.wait(.count((domino(_,_)),7));
 	?getFirstDomino(X,Y);
@@ -34,7 +34,7 @@ sleeping(14).
 	-domino(X,Y);
 .
 
-+playerturn(AGENT_NAME): .my_name(NAME) & AGENT_NAME\==NAME & not dominosontable(_)  & not win(_)
++playerturn(AGENT_NAME): .my_name(NAME) & AGENT_NAME\==NAME & not dominosontable(_)  & not win(_) & not draw
 <-
 	-+otherPlayerName(AGENT_NAME);
 .
@@ -43,6 +43,7 @@ sleeping(14).
 						& AGENT_NAME==NAME
 						& not planning
 						& not win(_)
+						& not draw
 						<-
 							+planning
 							!updateGoal;
@@ -57,7 +58,7 @@ sleeping(14).
 	<-
 		.print("Draw match")
 	.
-+!updateGoal: not win(_)
++!updateGoal: not win(_) & not draw
 	<-
 		?refreshGoal(GOAL);
 		-goal(_);
@@ -129,7 +130,7 @@ sleeping(14).
 		-planning;
 	.
 
--!play: not win(_)
+-!play: not win(_) & not draw
 	<-
 		!buy;
 		!updateGoal;
@@ -155,7 +156,7 @@ getDominoToLose(DOM,l):- getExtremeties(X,Y) & .count(domino(_,X),CONT) & CONT >
 getDominoToLose(DOM,r):- getExtremeties(X,Y) & .count(domino(Y,_),CONT) & CONT > 0	& getBiggerInLeft(Y,6,DOM).
 getDominoToLose(DOM,r):- getExtremeties(X,Y) & .count(domino(_,Y),CONT) & CONT > 0	& getBiggerInRight(Y,6,AUX)	& getReverse(AUX,DOM).
 //CRAZY-------------------------------------------------------------------------------------------------
-getDominoToPlayCrazyMode(DOMINO,SIDE):-verifyWhatThatIHaveToCrazyMode(DOMINO,SIDE) & .print("oi").
+getDominoToPlayCrazyMode(DOMINO,SIDE):-verifyWhatThatIHaveToCrazyMode(DOMINO,SIDE).
 verifyWhatThatIHaveToCrazyMode(DOMINO,SIDE):- getExtremeties(XE,YE) 
 											& countInX(XE,N1) 
 											& countInY(YE,N2)
