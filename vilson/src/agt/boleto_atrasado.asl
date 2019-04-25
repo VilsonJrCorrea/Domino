@@ -23,7 +23,7 @@ sleeping(14).
 	
 +dominosontable(LIST):true
 	<-
-		.print("Peças na mesa ",LIST);
+		.print("Pecas na mesa ",LIST);
 	.
 	
 +playerturn(AGENT_NAME): .my_name(NAME) & AGENT_NAME==NAME & not dominosontable(_) & not win(_) & not draw
