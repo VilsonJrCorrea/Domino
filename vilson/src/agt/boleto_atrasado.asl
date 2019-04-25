@@ -249,9 +249,9 @@ getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT)& CONT>0 & DOM=domino(I,X).
 getBiggerInRight(X,I,DOM):- .count(domino(I,X),CONT) & CONT==0 & getBiggerInRight(X,I-1,DOM).
 getReverse(A,B):- getSides(A,P,Q) & B=domino(Q,P).
 
-chooseGoal(PROBABILITY,GOAL):- PROBABILITY<0.2 & GOAL=win.
-chooseGoal(PROBABILITY,GOAL):- PROBABILITY>=0.2 & PROBABILITY<=0.30 & GOAL=draw.
-chooseGoal(PROBABILITY,GOAL):- PROBABILITY>0.30 & PROBABILITY<=1 & GOAL=crazy.
+chooseGoal(PROBABILITY,GOAL):- PROBABILITY<0.15 & GOAL=win.
+chooseGoal(PROBABILITY,GOAL):- PROBABILITY>=0.15 & PROBABILITY<=0.90 & GOAL=draw.
+chooseGoal(PROBABILITY,GOAL):- PROBABILITY>0.90 & PROBABILITY<=1 & GOAL=crazy.
 chooseGoal(PROBABILITY,GOAL):- PROBABILITY>1 & GOAL=lose.
 
 getHead([H|T],R):-getSides(H,X,Y) & R=X.
