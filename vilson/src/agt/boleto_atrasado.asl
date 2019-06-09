@@ -18,12 +18,13 @@ sleeping(14).
 +hand(DOMINO):true
 	<-
 		+DOMINO;
-		.print("Recebida ",DOMINO);
+		//.print("Recebida ",DOMINO);
 	.
 	
 +dominosontable(LIST):true
 	<-
-		.print("Pecas na mesa ",LIST);
+		true;
+		//.print("Pecas na mesa ",LIST);
 	.
 	
 +playerturn(AGENT_NAME): .my_name(NAME) & AGENT_NAME==NAME & not dominosontable(_) & not win(_) & not draw
@@ -51,12 +52,14 @@ sleeping(14).
 						.
 +sucessfullput(DOMINO):true
 	<-
-		.print("Domino full put with sucess ",DOMINO)
+		true;
+		//.print("Domino full put with sucess ",DOMINO)
 	.
 	
 +draw:true
 	<-
-		.print("Draw match")
+		true;
+		//.print("Draw match")
 	.
 +!updateGoal: not win(_) & not draw
 	<-
@@ -94,16 +97,16 @@ sleeping(14).
 
 +!buyLikeCrazy:sleeping(S) & S>0
 	 <-
-		.print("Buying like crazy ");
+		//.print("Buying like crazy ");
  		!buy;
  		!buyLikeCrazy;
 	.
 
 +!buyLikeCrazy:sleeping(S) & S==0
 	 <- 
-	 	.print("Finhised buying like crazy");
+	 	//.print("Finhised buying like crazy");
 		?getDominoToPlayCrazyMode(DOMINO,SIDE);
-		.print("I will play DOMINO ",DOMINO,"SIDE ",SIDE)
+		//.print("I will play DOMINO ",DOMINO,"SIDE ",SIDE)
 		put(DOMINO,SIDE);
 		!dropDominoOfBelief(DOMINO);
 		-planning;
@@ -114,17 +117,17 @@ sleeping(14).
 +!play: goal(_) & not haveExtremeties 
 	<-
 		?goal(GOALI);
-		.print("Goal is ", GOALI, " but i don't have the extremeties!");
+		//.print("Goal is ", GOALI, " but i don't have the extremeties!");
 		!buy;
 		!updateGoal;
 		?goal(GOAL);
-		.print("Goal updated ",GOAL);
+		//.print("Goal updated ",GOAL);
 		!play;
 	.
 	
 +!play:  goal(lose) & haveExtremeties & getDominoToLose(DOMINO,SIDE)
 	<-
-		.print("Goal lose");
+		//.print("Goal lose");
 		 put(DOMINO,SIDE);
 		!dropDominoOfBelief(DOMINO);
 		-planning;
@@ -135,18 +138,18 @@ sleeping(14).
 		!buy;
 		!updateGoal;
 		?goal(GOAL);
-		.print("##############>Goal updated ",GOAL);
+		//.print("##############>Goal updated ",GOAL);
 		!play;
 	.
 +!buy:true
 	<-
 	getdomino(NEWDOMINO);
 	+NEWDOMINO;
-	.print("New domino buyed ",NEWDOMINO);
+	//.print("New domino buyed ",NEWDOMINO);
 .
 -!buy:true
 	<-
-		.print("Passing the turn");
+		//.print("Passing the turn");
 		passturn;
 	.
 	
@@ -197,7 +200,7 @@ verifyDominonsOnTable(TABLE,I,MAIOR,CONT,VALAUX,P):-
 					          | (SUM<MAIOR | SUM==7) & verifyDominonsOnTable(TABLE,I+1,MAIOR,CONT,VALAUX,P)))
 					| (I<7 &verifyDominonsOnTable(TABLE,I+1,MAIOR,CONT,VALAUX,P)).
 verifyDominonsOnTable(TABLE,I,MAIOR,CONT,VALAUX,P):-CONT=MAIOR & P=VALAUX.
-verifyHowManyHaveOnTheRest([H|T],I,N,SUM,VAL):-	getSides(H,X,Y) & (X==I | Y==I) & verifyHowManyHaveOnTheRest(T,I,N+1,SUM,VAL).
+verifyHowManyHaveOnTheRest([H|T],I,N,SUM,VAL):-	getSides(H,X,Y) & (domino(I,_)|domino(_,I))&(X==I | Y==I) & verifyHowManyHaveOnTheRest(T,I,N+1,SUM,VAL).
 verifyHowManyHaveOnTheRest([H|T],I,N,SUM,VAL):- getSides(H,X,Y) & (X\==I | Y\==I) & verifyHowManyHaveOnTheRest(T,I,N,SUM,VAL).
 verifyHowManyHaveOnTheRest([],I,N,SUM,VAL):-SUM=N & VAL=I.
 haveExtremeties:- getExtremeties(XE,YE) & (domino(XE,_)| domino(YE,_)| domino(_,XE)| domino(_,YE)).
@@ -240,7 +243,7 @@ refreshGoal(GOAL):-
 	& refreshEnemyDominoes(LISTDONTHAVE) 
 	& calculateProbabilityWin(X,Y,LISTDONTHAVE,PROBABILITY)
 	& chooseGoal(PROBABILITY,GOAL)
-	& .print(GOAL," - probability of lose ",PROBABILITY)
+	//& .print(GOAL," - probability of lose ",PROBABILITY)
 .
 
 getBiggerInLeft(X,I,DOM):- .count(domino(X,I),CONT) & CONT>0 & DOM = domino(X,I).
